@@ -345,16 +345,26 @@
         self.error = @"No digits after initial minus";
         return sbjson_token_error;
 
-    } else if (mantissa_length >= 19) {
-        
+    } else if (mantissa_length > 38) {
+        self.error = @"Precision is too high";
+        return sbjson_token_error;
+
+    } else if (exponent > 127 || exponent < -128) {
+        self.error = @"Exponent out of range";
+        return sbjson_token_error;
+    }
+    
+    
+    if (mantissa_length >= 20) {
         NSString *number = [_stream stringWithRange:NSMakeRange(numberStart, _stream.index - numberStart)];
         *token = [NSDecimalNumber decimalNumberWithString:number];
 
     } else if (!isFloat && !hasExponent) {
-        if (!isNegative)
-            *token = [NSNumber numberWithUnsignedLongLong:mantissa];
-        else
+        if (isNegative)
             *token = [NSNumber numberWithLongLong:-mantissa];
+        else
+            *token = [NSNumber numberWithUnsignedLongLong:mantissa];
+        
     } else {
         *token = [NSDecimalNumber decimalNumberWithMantissa:mantissa
                                                    exponent:exponent

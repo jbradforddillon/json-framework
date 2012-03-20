@@ -364,20 +364,20 @@ static NSCharacterSet *kDecimalDigitCharacterSet;
         return sbjson_token_error;
     }
 
-    if (mantissa_length > LONG_LONG_DIGITS) {
+    if (mantissa_length <= LONG_LONG_DIGITS) {
+        if (!isFloat && !hasExponent) {
+            *token = [NSNumber numberWithLongLong: isNegative ? -mantissa : mantissa];
+
+        } else {
+            *token = [NSDecimalNumber decimalNumberWithMantissa:mantissa
+                                                       exponent:exponent
+                                                     isNegative:isNegative];
+        }
+
+    } else {
         NSString *number = [_stream stringWithRange:NSMakeRange(numberStart, _stream.index - numberStart)];
         *token = [NSDecimalNumber decimalNumberWithString:number];
 
-    } else if (!isFloat && !hasExponent) {
-        if (isNegative)
-            *token = [NSNumber numberWithLongLong:-mantissa];
-        else
-            *token = [NSNumber numberWithUnsignedLongLong:mantissa];
-        
-    } else {
-        *token = [NSDecimalNumber decimalNumberWithMantissa:mantissa
-                                                   exponent:exponent
-                                                 isNegative:isNegative];
     }
 
     return sbjson_token_number;
